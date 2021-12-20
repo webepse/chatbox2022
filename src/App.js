@@ -1,8 +1,12 @@
 import './App.css';
 import Formulaire from './components/Formulaire';
 import Message from './components/Message';
-import {useState} from 'react';
+import {useState, useEffect} from 'react';
 import { useParams } from 'react-router-dom'
+
+// Firebase
+import database from './base';
+import { getDatabase, ref, set, remove, onValue } from 'firebase/database'
 
 function App() {
   let {login} = useParams();
@@ -11,10 +15,29 @@ function App() {
   const [messages, setMessages] = useState({})
   const [pseudo, setPseudo] = useState(login)
 
+  useEffect(()=>{
+   const dbMessagesRef = ref(database, 'messages')
+   // écouteur d'event de changement de données
+   onValue(dbMessagesRef, (snapshot) => {
+     const data = snapshot.val()
+     if(data)
+     {
+       setMessages(data)
+     }
+   })
+
+  },[])
+
   const addMessage = message => {
     const newMessages = {...messages}
     newMessages[`message-${Date.now()}`] = message
-    setMessages(newMessages)
+    Object.keys(newMessages).slice(0,-10).forEach(key => {
+      newMessages[key] = null
+    })
+    set(ref(database,'/'),{
+      messages: newMessages
+    })
+
   }
 
   const myMessages = Object.keys(messages).map(
