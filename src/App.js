@@ -1,12 +1,18 @@
 import './App.css';
 import Formulaire from './components/Formulaire';
 import Message from './components/Message';
-import {useState, useEffect} from 'react';
+import {useState, useEffect, useRef} from 'react';
 import { useParams } from 'react-router-dom'
 
 // Firebase
 import database from './base';
 import { getDatabase, ref, set, remove, onValue } from 'firebase/database'
+
+import {
+  CSSTransition,
+  TransitionGroup
+} from 'react-transition-group'
+import './animation.css'
 
 function App() {
   let {login} = useParams();
@@ -14,6 +20,7 @@ function App() {
   // stock tous les messages
   const [messages, setMessages] = useState({})
   const [pseudo, setPseudo] = useState(login)
+  const nodeRef = useRef(null)
 
   useEffect(()=>{
    const dbMessagesRef = ref(database, 'messages')
@@ -40,13 +47,23 @@ function App() {
 
   }
 
+  // vérifier si c'est l'utilisateur connecté
+  const isUser = myPseudo => myPseudo === pseudo
+
   const myMessages = Object.keys(messages).map(
     key => (
-      <Message 
+      <CSSTransition
+        timeout={200}
+        classNames='fade'
         key={key}
-        pseudo={messages[key].pseudo}
-        message={messages[key].message}
-      />
+        nodeRef={nodeRef}
+      >
+        <Message 
+          isUser={isUser}
+          pseudo={messages[key].pseudo}
+          message={messages[key].message}
+        />
+      </CSSTransition>
     )
   )
 
@@ -54,7 +71,9 @@ function App() {
     <div className="box">
       <div>
         <div className="messages">
-          {myMessages}
+          <TransitionGroup className="message">
+            {myMessages}
+          </TransitionGroup>
         </div>
       </div>
       <Formulaire
